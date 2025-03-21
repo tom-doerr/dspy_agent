@@ -53,7 +53,7 @@ class PipelineOptimizer:
             
         return examples
     
-    def optimize(self, task: str, criterion: str, num_iterations: int = 3) -> SimplePipeline:
+    def optimize(self, task: str, criterion: str, num_iterations: int = 3, progress_callback=None) -> SimplePipeline:
         """Optimize the pipeline using bootstrap few-shot learning."""
         
         for iteration in range(num_iterations):
@@ -69,17 +69,7 @@ class PipelineOptimizer:
             top_examples = examples[:3]
             
             # Create a bootstrapped optimizer
-            teleprompter = dspy.Teleprompter(dspy.ChainOfThought(SimplePipeline))
-            
-            # Prepare training data
-            train_data = []
-            for ex in top_examples:
-                train_data.append({"input": ex["input"], "output": ex["output"]})
-            
-            # Optimize with the examples
-            optimized_pipeline = teleprompter.compile(
-                SimplePipeline(),
-                trainset=train_data,
+            bootstrapper = dspy.BootstrapFewShot(
                 metric=lambda example, pred: self.rating_module(
                     example["input"], 
                     pred.output, 
@@ -87,7 +77,22 @@ class PipelineOptimizer:
                 ) / 9.0  # Normalize to 0-1 range
             )
             
+            # Prepare training data
+            train_data = []
+            for ex in top_examples:
+                train_data.append({"input": ex["input"], "output": ex["output"]})
+            
+            # Optimize with the examples
+            optimized_pipeline = bootstrapper.compile(
+                self.pipeline,
+                trainset=train_data
+            )
+            
             # Update the pipeline
             self.pipeline = optimized_pipeline
+            
+            # Call progress callback if provided
+            if progress_callback:
+                progress_callback()
             
         return self.pipeline
