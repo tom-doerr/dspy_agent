@@ -46,6 +46,11 @@ def main():
 
         # Get the output XML from the unified module
         output_xml = unified_module(input_xml)
+        
+        # Log validation status
+        is_valid, error = unified_module.validate_xml(output_xml)
+        if not is_valid:
+            console.print(f"Warning: Output XML validation failed: {error}", style="yellow")
 
         # Parse the output XML
         try:
