@@ -16,11 +16,26 @@ class PipelineOptimizer:
         """Generate examples for bootstrapping."""
         examples = []
         
-        # Create a task prompt that will generate diverse inputs
-        task_prompt = f"Generate {num_examples} diverse examples for the task: {task}"
-        inputs = self.lm.generate(task_prompt, max_tokens=1000).split("\n\n")
+        # Create a signature for generating examples
+        class ExampleGenerator(dspy.Signature):
+            """Generate diverse examples for a task."""
+            examples = dspy.OutputField(desc=f"List of {num_examples} diverse examples for the task")
+            
+        generator = dspy.Predict(ExampleGenerator)
         
-        for i, input_text in enumerate(inputs[:num_examples]):
+        # Generate examples
+        task_prompt = f"Generate {num_examples} diverse variations of: {task}"
+        result = generator(task_prompt=task_prompt)
+        
+        # Parse the examples
+        if hasattr(result, 'examples'):
+            raw_examples = result.examples.split("\n\n")
+        else:
+            # Fallback to direct generation
+            raw_examples = [task] * min(3, num_examples)
+        
+        # Process each example
+        for i, input_text in enumerate(raw_examples[:num_examples]):
             if not input_text.strip():
                 continue
                 
