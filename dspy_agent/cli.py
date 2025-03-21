@@ -8,6 +8,67 @@ app = typer.Typer()
 console = Console()
 
 @app.command()
+def generate_training_data(
+    output_file: str = typer.Argument(..., help="Path to save training data"),
+    count: int = typer.Option(10, help="Number of training examples to generate"),
+):
+    """Generate synthetic training data for optimization."""
+    import random
+    from .schema import EXAMPLE_INPUT_XML, EXAMPLE_OUTPUT_XML
+    
+    examples = []
+    for _ in range(count):
+        # Vary the examples
+        input_xml = EXAMPLE_INPUT_XML.replace("previous_action", f"action_{random.randint(1,100)}") \
+            .replace("Previous knowledge", f"Knowledge v{random.randint(1,100)}") \
+            .replace("Result of the last action", f"Observation {random.randint(1,100)}")
+            
+        output_xml = EXAMPLE_OUTPUT_XML.replace("false", random.choice(["true", "false"])) \
+            .replace("Find all Python files", random.choice([
+                "Analyze log files",
+                "Process user data",
+                "Generate report"
+            ]))
+            
+        examples.append({
+            "input_xml": input_xml,
+            "output_xml": output_xml
+        })
+    
+    # Save to JSONL
+    with open(output_file, "w") as f:
+        for ex in examples:
+            f.write(json.dumps(ex) + "\n")
+            
+    console.print(f"Generated {count} training examples in {output_file}", style="bold green")
+
+@app.command()
+def optimize(
+    training_data: str = typer.Argument(..., help="Path to training data file"),
+    epochs: int = typer.Option(3, help="Number of optimization passes")
+):
+    """Optimize the DSPy module using training data."""
+    import dspy
+    from .unified import UnifiedModule
+    
+    # Load training data
+    with open(training_data) as f:
+        examples = [dspy.Example(**json.loads(line)) for line in f]
+    
+    # Initialize and optimize
+    module = UnifiedModule()
+    module.predictor = module.teleprompter.compile(
+        module.predictor,
+        trainset=examples,
+        valset=examples[:2],  # Small validation set
+        max_rounds=epochs
+    )
+    
+    # Save optimized model
+    module.save_optimized_model()
+    console.print(f"Optimization complete with {len(examples)} examples", style="bold green")
+
+@app.command()
 def run(
     task: str = typer.Argument(..., help="The task to perform"),
     model: str = typer.Option("deepseek/deepseek-chat", help="The model to use"),

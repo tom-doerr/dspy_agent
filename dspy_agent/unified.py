@@ -26,34 +26,53 @@ class UnifiedTask(dspy.Signature):
     Full schema: {OUTPUT_XML_SCHEMA}""")
 
 class UnifiedModule(dspy.Module):
-    def __init__(self):
+    def __init__(self, teleprompter=None):
         super().__init__()
         self.console = Console()
         
-        # Configure with BootstrapFewShot optimizer
-        self.teleprompter = dspy.BootstrapFewShot(
+        # Configure with optional injected teleprompter
+        self.teleprompter = teleprompter or dspy.BootstrapFewShot(
             metric=self._validation_metric,
             max_bootstrapped_demos=4,
             max_rounds=2
         )
         
-        # Initialize with examples and compile
-        self.predictor = self.teleprompter.compile(
+        # Load compiled model or initialize
+        self.predictor = self._load_optimized_model() or self.teleprompter.compile(
             UnifiedTask(),
-            trainset=[
-                dspy.Example(
-                    input_xml=EXAMPLE_INPUT_XML,
-                    output_xml=EXAMPLE_OUTPUT_XML
-                ).with_inputs("input_xml"),
-                dspy.Example(
-                    input_xml=EXAMPLE_INPUT_XML.replace("previous_action", "different_action"),
-                    output_xml=EXAMPLE_OUTPUT_XML.replace("false", "true")
-                ).with_inputs("input_xml")
-            ]
+            trainset=self._load_training_data()
         )
         
         # Parse the schema for validation
         self.output_schema_parser = etree.XMLSchema(etree.XML(OUTPUT_XML_SCHEMA))
+
+    def _load_training_data(self):
+        """Load training data from file."""
+        try:
+            with open("train_data.jsonl") as f:
+                return [
+                    dspy.Example(**json.loads(line)).with_inputs("input_xml")
+                    for line in f
+                ]
+        except FileNotFoundError:
+            return [
+                dspy.Example(
+                    input_xml=EXAMPLE_INPUT_XML,
+                    output_xml=EXAMPLE_OUTPUT_XML
+                ).with_inputs("input_xml")
+            ]
+
+    def _load_optimized_model(self):
+        """Load optimized model weights if available."""
+        try:
+            return dspy.Predict(UnifiedTask).load("optimized_model.json")
+        except FileNotFoundError:
+            return None
+
+    def save_optimized_model(self):
+        """Save the optimized model weights."""
+        self.predictor.save("optimized_model.json")
+        self.console.print("Saved optimized model to optimized_model.json", style="bold green")
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric for optimization that scores XML validity and structure."""
