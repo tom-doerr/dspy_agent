@@ -1,6 +1,7 @@
 import typer
 import json
 import os
+import subprocess
 from rich.console import Console
 import xml.etree.ElementTree as ET
 import dspy
@@ -193,9 +194,30 @@ def run(
             if op[0] == "message":
                 console.print(f"Message: {op[1]}", style="cyan")
             elif op[0] == "command":
-                console.print(f"Would execute command: {op[1]}", style="magenta")
-                # TODO: Actually execute the command and capture output
-                observation += f"Command '{op[1]}' would return some output.\n"
+                console.print(f"\nExecuting: {op[1]}", style="bold magenta")
+                console.print("WARNING: Executing arbitrary commands can be dangerous!", style="red")
+                
+                # Confirm execution
+                confirm = input("Proceed with execution? [y/N] ").strip().lower()
+                if confirm != 'y':
+                    observation += f"Command execution aborted by user: {op[1]}\n"
+                    continue
+                
+                try:
+                    result = subprocess.run(
+                        op[1], 
+                        shell=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    observation += f"Command output:\n{result.stdout}\n"
+                    if result.stderr:
+                        observation += f"Errors:\n{result.stderr}\n"
+                except subprocess.TimeoutExpired:
+                    observation += f"Command timed out: {op[1]}\n"
+                except Exception as e:
+                    observation += f"Command failed: {str(e)}\n"
             elif op[0] == "file":
                 console.print(f"Would write to file {op[1]}", style="magenta")
                 # TODO: Actually write to the file
