@@ -40,7 +40,7 @@ def run(
 @app.command()
 def optimize(
     task: str = typer.Argument(..., help="The task to optimize for"),
-    criterion: str = typer.Argument(..., help="The criterion for optimization"),
+    criterion: str = typer.Option(..., help="The criterion for optimization"),
     iterations: int = typer.Option(3, help="Number of optimization iterations"),
     model: str = typer.Option("deepseek/deepseek-chat", help="The model to use")
 ):
