@@ -36,7 +36,8 @@ class UnifiedModule(dspy.Module):
             metric=self._validation_metric,
             max_bootstrapped_demos=8,
             max_rounds=4,
-            max_labeled_demos=8
+            max_labeled_demos=8,
+            max_bootstraps=8  # Add explicit bootstrap limit
         )
         
         # Load compiled model or initialize
@@ -57,10 +58,13 @@ class UnifiedModule(dspy.Module):
         """Load training data from file."""
         try:
             with open("train_data.jsonl") as f:
-                return [
-                    dspy.Example(**json.loads(line)).with_inputs("input_xml")
-                    for line in f
-                ]
+                examples = []
+                for line in f:
+                    data = json.loads(line)
+                    if "input_xml" not in data or "output_xml" not in data:
+                        raise ValueError("Invalid training example format")
+                    examples.append(dspy.Example(**data).with_inputs("input_xml"))
+                return examples
         except FileNotFoundError:
             return [
                 dspy.Example(
