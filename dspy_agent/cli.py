@@ -49,7 +49,11 @@ def generate_training_data(
 def optimize(
     training_data: str = typer.Argument(..., help="Path to training data file"),
     epochs: int = typer.Option(3, help="Number of optimization passes"),
-    model: str = typer.Option("deepseek/deepseek-chat", help="The model to use")
+    model: str = typer.Option("deepseek/deepseek-chat", help="The model to use"),
+    optimizer: str = typer.Option(
+        "bootstrap", 
+        help="Optimizer to use: bootstrap, random_search, mipro"
+    )
 ):
     """Optimize the DSPy module using training data."""
     import dspy
