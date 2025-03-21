@@ -1,4 +1,5 @@
 import dspy
+from rich.console import Console
 import xml.etree.ElementTree as ET
 from lxml import etree
 import io
@@ -27,6 +28,7 @@ class UnifiedTask(dspy.Signature):
 class UnifiedModule(dspy.Module):
     def __init__(self):
         super().__init__()
+        self.console = Console()
         
         # Configure with BootstrapFewShot optimizer
         self.teleprompter = dspy.BootstrapFewShot(
@@ -117,8 +119,8 @@ class UnifiedModule(dspy.Module):
                 # Validate again
                 is_valid, error_message = self.validate_xml(output_xml)
                 if not is_valid:
-                    console.print(f"Warning: Generated XML is still invalid: {error_message}", style="yellow")
+                    self.console.print(f"Warning: Generated XML is still invalid: {error_message}", style="yellow")
             except Exception as e:
-                console.print(f"Error fixing XML: {e}", style="red")
+                self.console.print(f"Error fixing XML: {e}", style="red")
         
         return output_xml
