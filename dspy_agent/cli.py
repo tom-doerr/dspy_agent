@@ -1,5 +1,6 @@
 import typer
 import json
+import os
 from rich.console import Console
 import xml.etree.ElementTree as ET
 from .unified import UnifiedModule
@@ -52,9 +53,19 @@ def optimize(
     import dspy
     from .unified import UnifiedModule
     
-    # Load training data
-    with open(training_data) as f:
-        examples = [dspy.Example(**json.loads(line)) for line in f]
+    # Load training data with helpful error messages
+    if not os.path.exists(training_data):
+        console.print(f"Error: Training data file '{training_data}' not found", style="bold red")
+        console.print("First generate training data with:", style="yellow")
+        console.print(f"  python -m dspy_agent.cli generate-training-data {training_data} --count 50", style="green")
+        raise typer.Exit(code=1)
+
+    try:
+        with open(training_data) as f:
+            examples = [dspy.Example(**json.loads(line)) for line in f]
+    except IOError as e:
+        console.print(f"Error reading training data: {str(e)}", style="bold red")
+        raise typer.Exit(code=1)
     
     # Initialize and optimize
     module = UnifiedModule()
