@@ -115,7 +115,6 @@ def main():
         # Display the results
         console.print(f"Memory: {memory}", style="blue")
         console.print(f"Plan: {new_plan}", style="green")
-        console.print(f"Execution Instructions: {execution_instructions}", style="yellow")
 
     console.print("\nAgent run completed", style="bold green")
 
