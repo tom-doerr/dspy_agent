@@ -32,15 +32,15 @@ def generate_training_data(
                 "Generate report"
             ]))
             
-        examples.append({
-            "input_xml": input_xml,
-            "output_xml": output_xml
-        })
+        examples.append(dspy.Example(
+            input_xml=input_xml,
+            output_xml=output_xml
+        ).with_inputs("input_xml"))
     
     # Save to JSONL
     with open(output_file, "w") as f:
         for ex in examples:
-            f.write(json.dumps(ex) + "\n")
+            f.write(json.dumps(ex.store) + "\n")
             
     console.print(f"Generated {count} training examples in {output_file}", style="bold green")
 
@@ -67,7 +67,7 @@ def optimize(
 
     try:
         with open(training_data) as f:
-            examples = [dspy.Example(**json.loads(line)) for line in f]
+            examples = [dspy.Example(**json.loads(line)).with_inputs("input_xml") for line in f]
     except IOError as e:
         console.print(f"Error reading training data: {str(e)}", style="bold red")
         raise typer.Exit(code=1)
