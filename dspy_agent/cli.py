@@ -11,7 +11,6 @@ console = Console()
 def run(
     task: str = typer.Argument(..., help="The task to perform"),
     model: str = typer.Option("deepseek/deepseek-chat", help="The model to use"),
-    loop: int = typer.Option(1, "--loop", help="Number of loop iterations"),
 ):
     """Run the DSPy agent with a unified module for memory, planning, and execution."""
     import dspy
@@ -30,9 +29,13 @@ def run(
     last_plan = "<plan></plan>"
     last_action = ""
     observation = task  # Start with the task as the initial observation
+    
+    iteration = 1
+    is_done = False
 
-    for i in range(loop):
-        console.print(f"\nLoop iteration {i+1}/{loop}", style="bold")
+    while not is_done:
+        console.print(f"\nLoop iteration {iteration}", style="bold")
+        iteration += 1
 
         # Construct the input XML
         input_xml = f"""
@@ -53,6 +56,8 @@ def run(
             updated_memory = root.find("updated_memory").text or ""
             new_plan = root.find("new_plan").text or ""
             execution_instructions = root.find("execution_instructions").text or ""
+            is_done_element = root.find("is_done")
+            is_done = is_done_element is not None and is_done_element.text.lower() == "true"
         except Exception as e:
             console.print(f"Error parsing output XML: {e}", style="bold red")
             console.print(f"Output received: {output_xml}", style="red")

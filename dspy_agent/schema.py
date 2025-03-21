@@ -25,6 +25,7 @@ OUTPUT_XML_SCHEMA = """
         <xs:element name="updated_memory" type="xs:string" />
         <xs:element name="new_plan" type="xs:string" />
         <xs:element name="execution_instructions" type="xs:string" />
+        <xs:element name="is_done" type="xs:boolean" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -47,5 +48,6 @@ EXAMPLE_OUTPUT_XML = """
   <updated_memory>Updated knowledge including new observations</updated_memory>
   <new_plan><action>next_action_to_take</action></new_plan>
   <execution_instructions>Shell command or instructions to execute</execution_instructions>
+  <is_done>false</is_done>
 </agent_output>
 """

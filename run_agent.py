@@ -10,12 +10,11 @@ console = Console()
 
 def main():
     if len(sys.argv) < 2:
-        console.print("Usage: ./run_agent.py <task> [model] [loops]", style="bold red")
+        console.print("Usage: ./run_agent.py <task> [model]", style="bold red")
         sys.exit(1)
     
     task = sys.argv[1]
     model = sys.argv[2] if len(sys.argv) > 2 else "deepseek/deepseek-chat"
-    loops = int(sys.argv[3]) if len(sys.argv) > 3 else 1
     
     # Configure DSPy with the language model
     lm = dspy.LM(model)
@@ -28,8 +27,12 @@ def main():
     last_action = ""
     observation = task  # Start with the task as the initial observation
 
-    for i in range(loops):
-        console.print(f"\nLoop iteration {i+1}/{loops}", style="bold")
+    iteration = 1
+    is_done = False
+    
+    while not is_done:
+        console.print(f"\nLoop iteration {iteration}", style="bold")
+        iteration += 1
 
         # Construct the input XML
         input_xml = f"""
@@ -50,6 +53,8 @@ def main():
             updated_memory = root.find("updated_memory").text or ""
             new_plan = root.find("new_plan").text or ""
             execution_instructions = root.find("execution_instructions").text or ""
+            is_done_element = root.find("is_done")
+            is_done = is_done_element is not None and is_done_element.text.lower() == "true"
         except Exception as e:
             console.print(f"Error parsing output XML: {e}", style="bold red")
             console.print(f"Output received: {output_xml}", style="red")
