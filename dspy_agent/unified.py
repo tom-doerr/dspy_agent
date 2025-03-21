@@ -30,12 +30,11 @@ class UnifiedModule(dspy.Module):
         self.predictor = dspy.Predict(UnifiedTask)
         
         # Add examples to help the model understand the expected format
-        self.predictor.config.examples = [
-            dspy.Example(
-                input_xml=EXAMPLE_INPUT_XML,
-                output_xml=EXAMPLE_OUTPUT_XML
-            )
-        ]
+        self.predictor = dspy.Predict(UnifiedTask).reset_examples()
+        self.predictor.example = dspy.Example(
+            input_xml=EXAMPLE_INPUT_XML,
+            output_xml=EXAMPLE_OUTPUT_XML
+        )
         
         # Parse the schema for validation
         self.output_schema_parser = etree.XMLSchema(etree.XML(OUTPUT_XML_SCHEMA))
