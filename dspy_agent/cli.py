@@ -77,7 +77,6 @@ def optimize(
     module.predictor = module.teleprompter.compile(
         module.predictor,
         trainset=examples,
-        valset=examples[:2],  # Small validation set
         max_rounds=epochs
     )
     
