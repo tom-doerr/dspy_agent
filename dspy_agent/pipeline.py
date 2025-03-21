@@ -13,7 +13,7 @@ class SimplePipeline(dspy.Module):
         super().__init__()
         self.predictor = dspy.Predict(SimpleTask)
     
-    def forward(self, input_text: str, stream: bool = False) -> str:
+    def forward(self, input_text: str, stream: bool = False):
         """Process the input and return the output."""
         result = self.predictor(input=input_text)
         

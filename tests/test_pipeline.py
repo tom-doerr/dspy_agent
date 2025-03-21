@@ -7,6 +7,9 @@ class TestPipeline:
     def setup_model(self):
         # Create a simple predictable LM for testing
         class PredictableLM(dspy.LM):
+            def __init__(self):
+                super().__init__(model="mock")
+                
             def __call__(self, prompt, **kwargs):
                 return {"response": "The capital of France is Paris."}
         

@@ -80,7 +80,11 @@ class PipelineOptimizer:
             # Prepare training data
             train_data = []
             for ex in top_examples:
-                train_data.append({"input": ex["input"], "output": ex["output"]})
+                # Convert generator to string if needed
+                output = ex["output"]
+                if hasattr(output, '__iter__') and not isinstance(output, str):
+                    output = "".join(list(output))
+                train_data.append({"input": ex["input"], "output": output})
             
             # Optimize with the examples
             optimized_pipeline = bootstrapper.compile(

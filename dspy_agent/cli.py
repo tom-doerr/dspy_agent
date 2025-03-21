@@ -47,7 +47,10 @@ def run(
         result = result_text
     else:
         result = pipeline(task)
-        console.print(Panel(result, title="Result", border_style="green"))
+        # Handle if result is a generator
+        if hasattr(result, '__iter__') and not isinstance(result, str):
+            result = "".join(list(result))
+        console.print(Panel(str(result), title="Result", border_style="green"))
     
     # Rate the result if criterion is provided
     if criterion:

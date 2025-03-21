@@ -7,6 +7,9 @@ class TestRating:
     def setup_model(self):
         # Create a simple predictable LM for testing
         class PredictableLM(dspy.LM):
+            def __init__(self):
+                super().__init__(model="mock")
+                
             def __call__(self, prompt, **kwargs):
                 return {"response": "7"}
         
