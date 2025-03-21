@@ -1,6 +1,7 @@
 import dspy
 import json
 from rich.console import Console
+from .rating import RatingModule
 import xml.etree.ElementTree as ET
 from lxml import etree
 import io
@@ -30,6 +31,7 @@ class UnifiedModule(dspy.Module):
     def __init__(self, teleprompter=None):
         super().__init__()
         self.console = Console()
+        self.rating_module = RatingModule()
         
         # Configure with optional injected teleprompter
         self.teleprompter = teleprompter or dspy.BootstrapFewShot(
@@ -87,9 +89,28 @@ class UnifiedModule(dspy.Module):
         self.console.print("Saved optimized model to optimized_model.json", style="bold green")
 
     def _validation_metric(self, example, pred, trace=None):
-        """Custom metric for optimization that scores XML validity and structure."""
-        is_valid, error = self.validate_xml(pred.output_xml)
-        return 1.0 if is_valid else -1.0
+        """Custom metric that combines XML validity and quality ratings."""
+        # First validate XML structure
+        is_valid, validation_error = self.validate_xml(pred.output_xml)
+        
+        if not is_valid:
+            self.console.print(f"[red]XML Validation Failed:[/red] {validation_error}", style="red")
+            return 0.0  # Minimum score for invalid XML
+        
+        try:
+            # Calculate quality rating if XML is valid
+            raw_score = self.rating_module(
+                pipeline_input=example.input_xml,
+                pipeline_output=pred.output_xml
+            )
+            # Normalize 1-9 scale to 0-1 range
+            normalized_score = raw_score / 9.0
+            self.console.print(f"Quality Rating: {raw_score:.2f}/9 → {normalized_score:.2f}/1")
+            return normalized_score
+            
+        except Exception as e:
+            self.console.print(f"[yellow]Rating Error:[/yellow] {str(e)}", style="yellow")
+            return 0.5  # Partial credit if rating fails
 
     def validate_xml(self, xml_string: str) -> tuple[bool, str]:
         """Validate XML against the schema.
