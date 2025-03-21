@@ -46,9 +46,7 @@ class UnifiedModule(dspy.Module):
             elif optimizer == "mipro":
                 self.teleprompter = MIPROv2(
                     metric=self._validation_metric,
-                    minibatch=True,
-                    num_trials=10,
-                    instructions_only=False
+                    auto='light',
                 )
             else:  # default bootstrap
                 self.teleprompter = dspy.BootstrapFewShot(
