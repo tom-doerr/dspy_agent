@@ -3,6 +3,7 @@ import json
 import os
 from rich.console import Console
 import xml.etree.ElementTree as ET
+import dspy
 from .unified import UnifiedModule
 from .schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
 
