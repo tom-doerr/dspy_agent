@@ -165,22 +165,39 @@ class UnifiedModule(dspy.Module):
                 root = ET.fromstring(output_xml)
                 
                 # Check for required elements
-                required_elements = ["updated_memory", "new_plan", "execution_instructions", "is_done"]
+                required_elements = [
+                    "updated_memory",
+                    "new_plan", 
+                    "execution_instructions",
+                    "expected_outcome",
+                    "is_done"
+                ]
+                
                 for elem_name in required_elements:
                     if root.find(elem_name) is None:
-                        # Create missing element
+                        # Create element with default content
                         if elem_name == "updated_memory":
-                            ET.SubElement(root, elem_name).text = "No memory updates."
+                            new_elem = ET.SubElement(root, elem_name)
+                            new_elem.text = "No memory updates."
                         elif elem_name == "new_plan":
-                            plan_elem = ET.SubElement(root, elem_name)
+                            new_elem = ET.SubElement(root, elem_name)
                             plan_root = ET.fromstring(EXAMPLE_PLAN_XML)
-                            plan_elem.append(plan_root)
+                            new_elem.append(plan_root)
                         elif elem_name == "execution_instructions":
-                            exec_elem = ET.SubElement(root, elem_name)
+                            new_elem = ET.SubElement(root, elem_name)
                             exec_root = ET.fromstring(EXAMPLE_EXECUTION_XML)
-                            exec_elem.append(exec_root)
+                            new_elem.append(exec_root)
+                        elif elem_name == "expected_outcome":
+                            new_elem = ET.SubElement(root, elem_name)
+                            new_elem.text = "Expected outcome not specified"
                         elif elem_name == "is_done":
-                            ET.SubElement(root, elem_name).text = "false"
+                            new_elem = ET.SubElement(root, elem_name)
+                            new_elem.text = "false"
+                        
+                        # Reinsert in correct order
+                        root.remove(new_elem)
+                        insert_position = required_elements.index(elem_name)
+                        root.insert(insert_position, new_elem)
                 
                 # Convert back to string
                 output_xml = ET.tostring(root, encoding='unicode')
