@@ -36,8 +36,7 @@ class UnifiedModule(dspy.Module):
             metric=self._validation_metric,
             max_bootstrapped_demos=8,
             max_rounds=4,
-            max_labeled_demos=8,
-            max_bootstraps=8  # Add explicit bootstrap limit
+            max_labeled_demos=8
         )
         
         # Load compiled model or initialize
