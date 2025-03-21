@@ -27,17 +27,36 @@ class UnifiedTask(dspy.Signature):
 class UnifiedModule(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.predictor = dspy.Predict(UnifiedTask)
         
-        # Add examples to help the model understand the expected format
-        self.predictor = dspy.Predict(UnifiedTask).reset_examples()
-        self.predictor.example = dspy.Example(
-            input_xml=EXAMPLE_INPUT_XML,
-            output_xml=EXAMPLE_OUTPUT_XML
+        # Configure with BootstrapFewShot optimizer
+        self.teleprompter = dspy.BootstrapFewShot(
+            metric=self._validation_metric,
+            max_bootstrapped_demos=4,
+            max_rounds=2
+        )
+        
+        # Initialize with examples and compile
+        self.predictor = self.teleprompter.compile(
+            UnifiedTask(),
+            trainset=[
+                dspy.Example(
+                    input_xml=EXAMPLE_INPUT_XML,
+                    output_xml=EXAMPLE_OUTPUT_XML
+                ).with_inputs("input_xml"),
+                dspy.Example(
+                    input_xml=EXAMPLE_INPUT_XML.replace("previous_action", "different_action"),
+                    output_xml=EXAMPLE_OUTPUT_XML.replace("false", "true")
+                ).with_inputs("input_xml")
+            ]
         )
         
         # Parse the schema for validation
         self.output_schema_parser = etree.XMLSchema(etree.XML(OUTPUT_XML_SCHEMA))
+
+    def _validation_metric(self, example, pred, trace=None):
+        """Custom metric for optimization that scores XML validity and structure."""
+        is_valid, error = self.validate_xml(pred.output_xml)
+        return 1.0 if is_valid else -1.0
 
     def validate_xml(self, xml_string: str) -> tuple[bool, str]:
         """Validate XML against the schema.
@@ -98,8 +117,8 @@ class UnifiedModule(dspy.Module):
                 # Validate again
                 is_valid, error_message = self.validate_xml(output_xml)
                 if not is_valid:
-                    print(f"Warning: Generated XML is still invalid: {error_message}")
+                    console.print(f"Warning: Generated XML is still invalid: {error_message}", style="yellow")
             except Exception as e:
-                print(f"Error fixing XML: {e}")
+                console.print(f"Error fixing XML: {e}", style="red")
         
         return output_xml
