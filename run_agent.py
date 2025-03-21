@@ -62,7 +62,7 @@ def main():
 
         # Simulate executing the instructions and getting a new observation
         # TODO: Replace with real execution (e.g., run commands, collect output)
-        observation = f"Processed observation from iteration {i+1}"
+        observation = f"Processed observation from iteration {iteration}"
 
         # Update the state for the next iteration
         memory = updated_memory
