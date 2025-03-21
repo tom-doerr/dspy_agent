@@ -2,6 +2,7 @@
 import sys
 import dspy
 from dspy_agent.unified import UnifiedModule
+from dspy_agent.schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
 import xml.etree.ElementTree as ET
 from rich.console import Console
 

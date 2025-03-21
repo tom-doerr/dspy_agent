@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 import xml.etree.ElementTree as ET
 from .unified import UnifiedModule
+from .schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
 
 app = typer.Typer()
 console = Console()
