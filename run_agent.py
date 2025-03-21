@@ -1,24 +1,21 @@
-import typer
-from rich.console import Console
+#!/usr/bin/env python3
+import sys
+import dspy
+from dspy_agent.unified import UnifiedModule
 import xml.etree.ElementTree as ET
-from .unified import UnifiedModule
+from rich.console import Console
 
-app = typer.Typer()
 console = Console()
 
-@app.command()
-def run(
-    task: str = typer.Argument(..., help="The task to perform"),
-    model: str = typer.Option("deepseek/deepseek-chat", help="The model to use"),
-    loop: int = typer.Option(1, "--loop", help="Number of loop iterations"),
-):
-    """Run the DSPy agent with a unified module for memory, planning, and execution."""
-    import dspy
+def main():
+    if len(sys.argv) < 2:
+        console.print("Usage: ./run_agent.py <task> [model] [loops]", style="bold red")
+        sys.exit(1)
     
-    if not task.strip():
-        console.print("Error: Task cannot be empty", style="bold red")
-        raise typer.Exit(code=1)
-
+    task = sys.argv[1]
+    model = sys.argv[2] if len(sys.argv) > 2 else "deepseek/deepseek-chat"
+    loops = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+    
     # Configure DSPy with the language model
     lm = dspy.LM(model)
     dspy.settings.configure(lm=lm)
@@ -30,8 +27,8 @@ def run(
     last_action = ""
     observation = task  # Start with the task as the initial observation
 
-    for i in range(loop):
-        console.print(f"\nLoop iteration {i+1}/{loop}", style="bold")
+    for i in range(loops):
+        console.print(f"\nLoop iteration {i+1}/{loops}", style="bold")
 
         # Construct the input XML
         input_xml = f"""
@@ -67,8 +64,6 @@ def run(
         last_action = "executed_instructions"  # Could parse from execution_instructions
 
         # Display the results
-        console.print(f"Input XML: {input_xml}", style="dim")
-        console.print(f"Output XML: {output_xml}", style="dim")
         console.print(f"Memory: {memory}", style="blue")
         console.print(f"Plan: {new_plan}", style="green")
         console.print(f"Execution Instructions: {execution_instructions}", style="yellow")
@@ -76,4 +71,4 @@ def run(
     console.print("\nAgent run completed", style="bold green")
 
 if __name__ == "__main__":
-    app()
+    main()
