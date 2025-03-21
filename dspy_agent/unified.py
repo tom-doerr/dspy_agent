@@ -34,15 +34,20 @@ class UnifiedModule(dspy.Module):
         # Configure with optional injected teleprompter
         self.teleprompter = teleprompter or dspy.BootstrapFewShot(
             metric=self._validation_metric,
-            max_bootstrapped_demos=4,
-            max_rounds=2
+            max_bootstrapped_demos=8,
+            max_rounds=4
         )
         
         # Load compiled model or initialize
-        self.predictor = self._load_optimized_model() or self.teleprompter.compile(
-            UnifiedTask,
-            trainset=self._load_training_data()
-        )
+        compiled_predictor = self._load_optimized_model()
+        if not compiled_predictor:
+            compiled_predictor = dspy.Predict(UnifiedTask)
+            self.teleprompter.compile(
+                compiled_predictor,
+                trainset=self._load_training_data()
+            )
+            
+        self.predictor = compiled_predictor
         
         # Parse the schema for validation
         self.output_schema_parser = etree.XMLSchema(etree.XML(OUTPUT_XML_SCHEMA))
@@ -63,10 +68,12 @@ class UnifiedModule(dspy.Module):
                 ).with_inputs("input_xml")
             ]
 
-    def _load_optimized_model(self):
+    def _load_optimized_model(self) -> dspy.Predict:
         """Load optimized model weights if available."""
         try:
-            return dspy.Predict(UnifiedTask).load("optimized_model.json")
+            predictor = dspy.Predict(UnifiedTask)
+            predictor.load("optimized_model.json")
+            return predictor
         except FileNotFoundError:
             return None
 
