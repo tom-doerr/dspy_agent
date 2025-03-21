@@ -35,7 +35,8 @@ class UnifiedModule(dspy.Module):
         self.teleprompter = teleprompter or dspy.BootstrapFewShot(
             metric=self._validation_metric,
             max_bootstrapped_demos=8,
-            max_rounds=4
+            max_rounds=4,
+            max_labeled_demos=8
         )
         
         # Load compiled model or initialize

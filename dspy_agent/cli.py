@@ -76,8 +76,7 @@ def optimize(
     module = UnifiedModule()
     module.predictor = module.teleprompter.compile(
         module.predictor,
-        trainset=examples,
-        max_rounds=epochs
+        trainset=examples
     )
     
     # Save optimized model
