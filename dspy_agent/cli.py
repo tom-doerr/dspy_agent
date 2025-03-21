@@ -15,6 +15,7 @@ console = Console()
 def generate_training_data(
     output_file: str = typer.Argument(..., help="Path to save training data"),
     count: int = typer.Option(10, help="Number of training examples to generate"),
+    no_output: bool = typer.Option(False, "--no-output", help="Generate examples without output XML"),
 ):
     """Generate synthetic training data for optimization."""
     import random
@@ -27,13 +28,17 @@ def generate_training_data(
             .replace("Previous knowledge", f"Knowledge v{random.randint(1,100)}") \
             .replace("Result of the last action", f"Observation {random.randint(1,100)}")
             
-        output_xml = EXAMPLE_OUTPUT_XML.replace("false", random.choice(["true", "false"])) \
-            .replace("Find all Python files", random.choice([
-                "Analyze log files",
-                "Process user data",
-                "Generate report"
-            ]))
-            
+        # Generate output XML unless disabled
+        if no_output:
+            output_xml = ""
+        else:
+            output_xml = EXAMPLE_OUTPUT_XML.replace("false", random.choice(["true", "false"])) \
+                .replace("Find all Python files", random.choice([
+                    "Analyze log files",
+                    "Process user data",
+                    "Generate report"
+                ]))
+        
         examples.append(dspy.Example(
             input_xml=input_xml,
             output_xml=output_xml
