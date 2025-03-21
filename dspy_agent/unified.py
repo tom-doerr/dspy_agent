@@ -40,7 +40,7 @@ class UnifiedModule(dspy.Module):
         
         # Load compiled model or initialize
         self.predictor = self._load_optimized_model() or self.teleprompter.compile(
-            UnifiedTask(input_xml="", output_xml=""),  # Initialize with empty values
+            UnifiedTask,
             trainset=self._load_training_data()
         )
         
