@@ -2,6 +2,7 @@ import dspy
 import json
 from rich.console import Console
 from .rating import RatingModule
+from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPRO
 import xml.etree.ElementTree as ET
 from lxml import etree
 import io
@@ -28,18 +29,36 @@ class UnifiedTask(dspy.Signature):
     Full schema: {OUTPUT_XML_SCHEMA}""")
 
 class UnifiedModule(dspy.Module):
-    def __init__(self, teleprompter=None):
+    def __init__(self, teleprompter=None, optimizer: str = "bootstrap"):
         super().__init__()
         self.console = Console()
         self.rating_module = RatingModule()
         
-        # Configure with optional injected teleprompter
-        self.teleprompter = teleprompter or dspy.BootstrapFewShot(
-            metric=self._validation_metric,
-            max_bootstrapped_demos=8,
-            max_rounds=4,
-            max_labeled_demos=8
-        )
+        # Configure optimizer
+        if teleprompter is None:
+            if optimizer == "random_search":
+                self.teleprompter = BootstrapFewShotWithRandomSearch(
+                    metric=self._validation_metric,
+                    max_bootstrapped_demos=8,
+                    max_labeled_demos=8,
+                    num_candidate_programs=5
+                )
+            elif optimizer == "mipro":
+                self.teleprompter = MIPRO(
+                    metric=self._validation_metric,
+                    minibatch=True,
+                    num_trials=10,
+                    instructions_only=False
+                )
+            else:  # default bootstrap
+                self.teleprompter = dspy.BootstrapFewShot(
+                    metric=self._validation_metric,
+                    max_bootstrapped_demos=8,
+                    max_rounds=4,
+                    max_labeled_demos=8
+                )
+        else:
+            self.teleprompter = teleprompter
         
         # Load compiled model or initialize
         compiled_predictor = self._load_optimized_model()

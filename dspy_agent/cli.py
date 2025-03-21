@@ -77,7 +77,7 @@ def optimize(
         raise typer.Exit(code=1)
     
     # Initialize and optimize
-    module = UnifiedModule()
+    module = UnifiedModule(optimizer=optimizer)
     module.predictor = module.teleprompter.compile(
         module.predictor,
         trainset=examples
