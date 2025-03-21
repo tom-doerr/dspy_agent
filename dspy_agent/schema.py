@@ -93,26 +93,11 @@ OUTPUT_XML_SCHEMA = """
         <xs:element name="execution_instructions">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="write_operations">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="operation" maxOccurs="unbounded">
-                      <xs:complexType>
-                        <xs:simpleContent>
-                          <xs:extension base="xs:string">
-                            <xs:attribute name="type" use="required" />
-                            <xs:attribute name="path" type="xs:string" />
-                            <xs:attribute name="command" type="xs:string" />
-                          </xs:extension>
-                        </xs:simpleContent>
-                      </xs:complexType>
-                    </xs:element>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
+              <xs:any processContents="skip" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
+        <xs:element name="expected_outcome" type="xs:string" />
         <xs:element name="is_done" type="xs:boolean" />
       </xs:sequence>
     </xs:complexType>
@@ -191,6 +176,7 @@ EXAMPLE_OUTPUT_XML = """
       <operation type="message">Filtering for Python files only</operation>
     </write_operations>
   </execution_instructions>
+  <expected_outcome>Discovery of all Python source files in current directory with accurate count</expected_outcome>
   <is_done>false</is_done>
 </agent_output>
 """

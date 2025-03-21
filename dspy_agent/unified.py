@@ -2,7 +2,7 @@ import dspy
 import json
 from rich.console import Console
 from .rating import RatingModule
-from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPRO
+from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPROv2
 import xml.etree.ElementTree as ET
 from lxml import etree
 import io
@@ -44,7 +44,7 @@ class UnifiedModule(dspy.Module):
                     num_candidate_programs=5
                 )
             elif optimizer == "mipro":
-                self.teleprompter = MIPRO(
+                self.teleprompter = MIPROv2(
                     metric=self._validation_metric,
                     minibatch=True,
                     num_trials=10,
