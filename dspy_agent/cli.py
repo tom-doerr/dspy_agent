@@ -37,6 +37,8 @@ def run(
     pipeline = SimplePipeline()
     
     # Process the task with or without streaming
+    console.print(f"Memory before: {pipeline.get_memory()}", style="blue")
+    
     if stream:
         console.print("Streaming output:", style="bold")
         result_text = ""
@@ -52,11 +54,58 @@ def run(
             result = "".join(list(result))
         console.print(Panel(str(result), title="Result", border_style="green"))
     
+    console.print(f"Memory after: {pipeline.get_memory()}", style="blue")
+    
     # Rate the result if criterion is provided
     if criterion:
         rating_module = RatingModule()
         rating = rating_module(task, result, criterion)
         console.print(f"Rating ({criterion}): {rating}/9", style="bold blue")
+
+@app.command()
+def memory(
+    action: str = typer.Argument(..., help="Action to perform: 'show', 'add', or 'clear'"),
+    content: str = typer.Option(None, help="Content to add to memory (for 'add' action)"),
+    model: str = typer.Option("deepseek/deepseek-chat", help="The model to use")
+):
+    """View or manipulate the agent's memory."""
+    import dspy
+    
+    # Initialize the model
+    lm = dspy.LM(model)
+    dspy.settings.configure(lm=lm)
+    
+    # Initialize the pipeline
+    pipeline = SimplePipeline()
+    
+    if action.lower() == "show":
+        memory = pipeline.get_memory()
+        if not memory:
+            console.print("Memory is empty", style="yellow")
+        else:
+            console.print(Panel(memory, title="Current Memory", border_style="blue"))
+    
+    elif action.lower() == "add" and content:
+        memory_before = pipeline.get_memory()
+        memory_ops = pipeline.memory_module(content)
+        updated_memory = pipeline.memory_module.update_memory(memory_ops)
+        
+        console.print(f"Memory before: {memory_before}", style="blue")
+        console.print(f"Added: {content}", style="green")
+        console.print(f"Memory after: {updated_memory}", style="blue")
+        
+        # Show the operations that were performed
+        console.print("Operations performed:", style="yellow")
+        for op in memory_ops:
+            console.print(f"  Search: '{op.get('search', '')}' → Replace: '{op.get('replace', '')}'")
+    
+    elif action.lower() == "clear":
+        pipeline.memory_module.memory = ""
+        console.print("Memory cleared", style="green")
+    
+    else:
+        console.print(f"Unknown action: {action}", style="bold red")
+        console.print("Available actions: show, add, clear", style="yellow")
 
 @app.command()
 def optimize(
