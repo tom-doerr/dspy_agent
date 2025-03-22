@@ -60,7 +60,8 @@ class UnifiedModule(dspy.Module):
             compiled_predictor = dspy.Predict(UnifiedTask)
             self.teleprompter.compile(
                 compiled_predictor,
-                trainset=self._load_training_data()
+                trainset=self._load_training_data(),
+                requires_permission_to_run=False,
             )
             
         self.predictor = compiled_predictor
@@ -156,12 +157,14 @@ class UnifiedModule(dspy.Module):
 
     def forward(self, input_xml: str) -> str:
         """Generate the output XML based on the input XML."""
+        self.console.print(f"Input XML:\n{input_xml}")
         result = self.predictor(
             input_schema=INPUT_XML_SCHEMA,
             output_schema=OUTPUT_XML_SCHEMA,
             input_xml=input_xml
         )
         output_xml = result.output_xml
+        self.console.print(f"Generated output XML:\n{output_xml}")
         
         # Validate the output XML
         is_valid, error_message = self.validate_xml(output_xml)
