@@ -105,10 +105,12 @@ class Optimizer:
             predictor = self._load_optimized_model() or dspy.Predict(UnifiedTask)
             
             # Run optimization
+            # Only MIPROv2 needs permission to run
+            requires_permission = isinstance(self.teleprompter, MIPROv2)
             optimized_predictor = self.teleprompter.compile(
                 predictor,
                 trainset=train_data,
-                requires_permission_to_run=False,
+                requires_permission_to_run=requires_permission,
             )
             
             # Save and return optimized model
