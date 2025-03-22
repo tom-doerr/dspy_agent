@@ -90,10 +90,18 @@ def optimize(
     
     # Initialize and optimize
     module = UnifiedModule(optimizer=optimizer)
-    module.predictor = module.teleprompter.compile(
-        module.predictor,
-        trainset=examples
-    )
+    try:
+        module.predictor = module.teleprompter.compile(
+            module.predictor,
+            trainset=examples
+        )
+    except Exception as e:
+        console.print(f"[bold red]Optimization Failed:[/bold red] {str(e)}", style="red")
+        console.print("Last successful example:", style="yellow")
+        if examples:
+            console.print(f"Input: {examples[-1].input_xml}", style="yellow")
+            console.print(f"Output: {examples[-1].output_xml}", style="yellow")
+        raise typer.Exit(code=1)
     
     # Save optimized model
     module.save_optimized_model()

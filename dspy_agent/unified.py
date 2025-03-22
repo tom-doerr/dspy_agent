@@ -95,48 +95,49 @@ class UnifiedModule(dspy.Module):
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric that combines XML validity and quality ratings."""
-        # First validate XML structure
-        is_valid, validation_error = self.validate_xml(pred.output_xml)
-        
-        if not is_valid:
-            self.console.print(f"[red]XML Validation Failed:[/red] {validation_error}", style="red")
-            return 0.0  # Minimum score for invalid XML
-        
         try:
+            # First validate XML structure
+            is_valid, validation_error = self.validate_xml(pred.output_xml)
+            
+            if not is_valid:
+                self.console.print(f"[red]XML Validation Failed:[/red] {validation_error}", style="red")
+                self.console.print(f"Invalid XML content:\n{pred.output_xml}", style="red")
+                return 0.0
+            
             # Calculate quality rating if XML is valid
             raw_score = self.rating_module(
                 pipeline_input=example.input_xml,
                 pipeline_output=pred.output_xml
             )
-            # Normalize 1-9 scale to 0-1 range
             normalized_score = raw_score / 9.0
             self.console.print(f"Quality Rating: {raw_score:.2f}/9 → {normalized_score:.2f}/1")
             return normalized_score
             
         except Exception as e:
-            self.console.print(f"[yellow]Rating Error:[/yellow] {str(e)}", style="yellow")
-            return 0.5  # Partial credit if rating fails
+            self.console.print(f"[bold red]Validation Error:[/bold red] {str(e)}", style="red")
+            self.console.print(f"Example Input: {example.input_xml}", style="yellow")
+            self.console.print(f"Predicted Output: {pred.output_xml}", style="yellow")
+            return 0.0
 
     def validate_xml(self, xml_string: str) -> tuple[bool, str]:
-        """Validate XML against the schema.
-        
-        Returns:
-            tuple: (is_valid, error_message)
-        """
+        """Validate XML against the schema."""
         try:
-            # Parse the XML
             xml_doc = etree.parse(io.StringIO(xml_string))
-            
-            # Validate against schema
             is_valid = self.output_schema_parser.validate(xml_doc)
             
             if not is_valid:
-                error_message = self.output_schema_parser.error_log.filter_from_errors()[0]
-                return False, str(error_message)
-            
+                error_log = self.output_schema_parser.error_log
+                errors = "\n".join([
+                    f"Line {error.line}: {error.message}" 
+                    for error in error_log.filter_from_errors()
+                ])
+                return False, f"Schema validation errors:\n{errors}"
+                
             return True, ""
+        except etree.XMLSyntaxError as e:
+            return False, f"XML syntax error: {str(e)}"
         except Exception as e:
-            return False, str(e)
+            return False, f"Unexpected validation error: {str(e)}"
 
     def forward(self, input_xml: str) -> str:
         """Generate the output XML based on the input XML."""
