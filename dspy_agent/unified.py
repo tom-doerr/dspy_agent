@@ -25,64 +25,16 @@ class UnifiedTask(dspy.Signature):
     output_xml = dspy.OutputField(desc="Output XML following the output schema")
 
 class UnifiedModule(dspy.Module):
-    def __init__(self, teleprompter=None, optimizer: str = "bootstrap"):
+    def __init__(self, predictor=None):
         super().__init__()
         self.console = Console()
         self.rating_module = RatingModule()
-        
-        # Configure optimizer
-        if teleprompter is None:
-            if optimizer == "random_search":
-                self.teleprompter = BootstrapFewShotWithRandomSearch(
-                    metric=self._validation_metric,
-                    max_bootstrapped_demos=8,
-                    max_labeled_demos=8,
-                    num_candidate_programs=5
-                )
-            elif optimizer == "mipro":
-                self.teleprompter = MIPROv2(
-                    metric=self._validation_metric,
-                    auto='light',
-                )
-            else:  # default bootstrap
-                self.teleprompter = dspy.BootstrapFewShot(
-                    metric=self._validation_metric,
-                    max_bootstrapped_demos=8,
-                    max_rounds=4,
-                    max_labeled_demos=8
-                )
-        else:
-            self.teleprompter = teleprompter
-        
-        # Load compiled model or initialize
-        compiled_predictor = self._load_optimized_model()
-        if not compiled_predictor:
-            compiled_predictor = dspy.Predict(UnifiedTask)
-            self.teleprompter.compile(
-                compiled_predictor,
-                trainset=self._load_training_data(),
-                requires_permission_to_run=False,
-            )
-            
-        self.predictor = compiled_predictor
+        self.predictor = predictor or dspy.Predict(UnifiedTask)
         
         # Parse the schema for validation
         self.output_schema_parser = etree.XMLSchema(etree.XML(OUTPUT_XML_SCHEMA))
 
 
-    def _load_optimized_model(self) -> dspy.Predict:
-        """Load optimized model weights if available."""
-        try:
-            predictor = dspy.Predict(UnifiedTask)
-            predictor.load("optimized_model.json")
-            return predictor
-        except FileNotFoundError:
-            return None
-
-    def save_optimized_model(self):
-        """Save the optimized model weights."""
-        self.predictor.save("optimized_model.json")
-        self.console.print("Saved optimized model to optimized_model.json", style="bold green")
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric that combines XML validity and quality ratings."""

@@ -15,7 +15,49 @@ class Optimizer:
     def __init__(self, model_name: str = "deepseek/deepseek-chat"):
         self.model_name = model_name
         self.rating_module = RatingModule()
+        self.teleprompter = None
         self._configure_model()
+        self._init_teleprompter()
+
+    def _init_teleprompter(self):
+        """Initialize the optimization strategy"""
+        self.teleprompter = BootstrapFewShotWithRandomSearch(
+            metric=self._validation_metric,
+            max_bootstrapped_demos=8,
+            max_labeled_demos=8,
+            num_candidate_programs=5
+        )
+
+    def _validation_metric(self, example, pred, trace=None):
+        """Custom metric that combines XML validity and quality ratings."""
+        try:
+            # Validate XML structure
+            is_valid, _ = UnifiedModule().validate_xml(pred.output_xml)
+            if not is_valid:
+                return 0.0
+            
+            # Calculate quality rating
+            raw_score = self.rating_module(
+                pipeline_input=example.input_xml,
+                pipeline_output=pred.output_xml
+            )
+            return raw_score / 9.0
+            
+        except Exception as e:
+            return 0.0
+
+    def _load_optimized_model(self) -> dspy.Predict:
+        """Load optimized model weights if available."""
+        try:
+            predictor = dspy.Predict(UnifiedTask)
+            predictor.load("optimized_model.json")
+            return predictor
+        except FileNotFoundError:
+            return None
+
+    def save_optimized_model(self, predictor):
+        """Save the optimized model weights."""
+        predictor.save("optimized_model.json")
         
     def _configure_model(self):
         """Centralized model configuration"""
@@ -41,21 +83,25 @@ class Optimizer:
             output_xml=data.get("output_xml", "")
         ).with_inputs("input_schema", "output_schema", "input_xml")
     
-    def optimize(self, training_data_path: str, optimizer_type: str = "bootstrap", num_iterations: int = 3):
+    def optimize(self, training_data_path: str, num_iterations: int = 3):
         """Run full optimization workflow"""
         train_data = self._load_training_data(training_data_path)
-        module = UnifiedModule(optimizer=optimizer_type)
         
         try:
-            optimized_predictor = module.teleprompter.compile(
-                module.predictor,
+            # Start with base predictor or pre-optimized version
+            predictor = self._load_optimized_model() or dspy.Predict(UnifiedTask)
+            
+            # Run optimization
+            optimized_predictor = self.teleprompter.compile(
+                predictor,
                 trainset=train_data,
                 requires_permission_to_run=False,
             )
-            module.predictor = optimized_predictor
-            module.save_optimized_model()
+            
+            # Save and return optimized model
+            self.save_optimized_model(optimized_predictor)
             console.print(f"Optimization complete with {len(train_data)} examples", style="bold green")
-            return module
+            return UnifiedModule(optimized_predictor)
         except Exception as e:
             console.print(f"[bold red]Optimization Failed:[/bold red] {str(e)}", style="red")
             raise
