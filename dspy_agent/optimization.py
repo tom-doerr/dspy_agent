@@ -32,7 +32,10 @@ class Optimizer:
         elif optimizer_type == "mipro":
             self.optimizer = MIPROv2(
                 metric=self._validation_metric,
+                max_bootstrapped_demos=0,
+                max_labeled_demos=0,
                 auto='light',
+                num_threads=1,
             )
         else:  # default bootstrap
             self.optimizer = dspy.BootstrapFewShot(
@@ -73,7 +76,7 @@ class Optimizer:
             pipeline_input=example.input_xml,
             pipeline_output=pred.output_xml
         ) / 9.0  # Normalize to 0-1
-        score = score_raw + score_rating_module
+        score = (score_raw + score_rating_module) / 2.0
         return score
 
     def _load_optimized_model(self) -> dspy.Predict:
