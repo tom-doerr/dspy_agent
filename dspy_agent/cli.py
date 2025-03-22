@@ -73,7 +73,9 @@ def optimize(
     from .unified import UnifiedModule
     
     # Configure DSPy with the language model
-    lm = dspy.LM(model)
+    lm = dspy.LM(model,
+            cache=False,
+            )
     dspy.settings.configure(lm=lm)
     
     # Load training data with helpful error messages
@@ -113,7 +115,8 @@ def optimize(
     try:
         module.predictor = module.teleprompter.compile(
             module.predictor,
-            trainset=examples
+            trainset=examples,
+            requires_permission_to_run=False,
         )
     except Exception as e:
         console.print(f"[bold red]Optimization Failed:[/bold red] {str(e)}", style="red")
@@ -168,7 +171,9 @@ def run(
         """
 
         # Get the output XML from the unified module
+        console.print(f"Input XML: {input_xml}", flush=True)
         output_xml = unified_module(input_xml)
+        console.print(f"Output XML: {output_xml}")
         
         # Log validation status
         is_valid, error = unified_module.validate_xml(output_xml)

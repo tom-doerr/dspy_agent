@@ -18,7 +18,7 @@ from .schema import (
 )
 
 class UnifiedTask(dspy.Signature):
-    """Generate output XML with updated memory, new plan, and execution instructions from input XML."""
+    """Generate output XML with updated memory, new plan, and execution instructions from input XML. """
     input_schema = dspy.InputField(desc="Input XML schema", default=INPUT_XML_SCHEMA)
     output_schema = dspy.InputField(desc="Output XML schema", default=OUTPUT_XML_SCHEMA)
     input_xml = dspy.InputField(desc="Input XML following the input schema")
@@ -157,7 +157,7 @@ class UnifiedModule(dspy.Module):
 
     def forward(self, input_xml: str) -> str:
         """Generate the output XML based on the input XML."""
-        self.console.print(f"Input XML:\n{input_xml}")
+        self.console.print(f"Input XML:\n{input_xml}", flush=True)
         result = self.predictor(
             input_schema=INPUT_XML_SCHEMA,
             output_schema=OUTPUT_XML_SCHEMA,
