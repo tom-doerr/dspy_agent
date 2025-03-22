@@ -51,35 +51,27 @@ class UnifiedModule(dspy.Module):
             self.console.print(f"Invalid XML content:\n{pred.output_xml}", style="red")
             return 0.0
         
-        try:
-            # Get detailed ratings with reasoning
-            detailed_ratings = self.rating_module.get_detailed_ratings(
-                pipeline_input=example.input_xml,
-                pipeline_output=pred.output_xml
-            )
-            
-            # Print detailed ratings
-            self.console.print("[bold]Detailed Ratings:[/bold]")
-            for criterion, rating in detailed_ratings.items():
-                if criterion != "error":
-                    self.console.print(f"[bold]{criterion.capitalize()}:[/bold] {rating['score']}/9")
-                    self.console.print(f"  Reasoning: {rating['reasoning']}")
-            
-            # Calculate quality rating if XML is valid
-            raw_score = self.rating_module(
-                pipeline_input=example.input_xml,
-                pipeline_output=pred.output_xml
-            )
-            normalized_score = raw_score / 9.0
-            self.console.print(f"Quality Rating: {raw_score:.2f}/9 → {normalized_score:.2f}/1")
-            return normalized_score
-            
-        except Exception as e:
-            self.console.print(f"[bold red]Rating Error:[/bold red] {str(e)}", style="red")
-            self.console.print(f"Example Input: {example.input_xml}", style="yellow")
-            self.console.print(f"Predicted Output: {pred.output_xml}", style="yellow")
-            # Return 0.0 instead of raising an exception
-            return 0.0
+        # Get detailed ratings with reasoning
+        detailed_ratings = self.rating_module.get_detailed_ratings(
+            pipeline_input=example.input_xml,
+            pipeline_output=pred.output_xml
+        )
+        
+        # Print detailed ratings
+        self.console.print("[bold]Detailed Ratings:[/bold]")
+        for criterion, rating in detailed_ratings.items():
+            if criterion != "error":
+                self.console.print(f"[bold]{criterion.capitalize()}:[/bold] {rating['score']}/9")
+                self.console.print(f"  Reasoning: {rating['reasoning']}")
+        
+        # Calculate quality rating if XML is valid
+        raw_score = self.rating_module(
+            pipeline_input=example.input_xml,
+            pipeline_output=pred.output_xml
+        )
+        normalized_score = raw_score / 9.0
+        self.console.print(f"Quality Rating: {raw_score:.2f}/9 → {normalized_score:.2f}/1")
+        return normalized_score
 
     def validate_xml(self, xml_string: str) -> tuple[bool, str]:
         """Validate XML against the schema with local resolution"""

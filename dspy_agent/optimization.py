@@ -50,31 +50,25 @@ class Optimizer:
             console.print(f"[red]XML Validation Failed:[/red] {error}", style="red")
             return 0.0
         
-        try:
-            # Get detailed ratings with reasoning
-            detailed_ratings = self.rating_module.get_detailed_ratings(
-                pipeline_input=example.input_xml,
-                pipeline_output=pred.output_xml
-            )
-            
-            # Print detailed ratings
-            console.print("[bold]Detailed Ratings:[/bold]")
-            for criterion, rating in detailed_ratings.items():
-                if criterion != "error":
-                    console.print(f"[bold]{criterion.capitalize()}:[/bold] {rating['score']}/9")
-                    console.print(f"  Reasoning: {rating['reasoning']}")
-            
-            # Calculate quality rating
-            raw_score = self.rating_module(
-                pipeline_input=example.input_xml,
-                pipeline_output=pred.output_xml
-            )
-            return raw_score / 9.0
-            
-        except Exception as e:
-            console.print(f"[bold red]Rating Error:[/bold red] {str(e)}", style="red")
-            # Return 0.0 instead of raising an exception
-            return 0.0
+        # Get detailed ratings with reasoning
+        detailed_ratings = self.rating_module.get_detailed_ratings(
+            pipeline_input=example.input_xml,
+            pipeline_output=pred.output_xml
+        )
+        
+        # Print detailed ratings
+        console.print("[bold]Detailed Ratings:[/bold]")
+        for criterion, rating in detailed_ratings.items():
+            if criterion != "error":
+                console.print(f"[bold]{criterion.capitalize()}:[/bold] {rating['score']}/9")
+                console.print(f"  Reasoning: {rating['reasoning']}")
+        
+        # Calculate quality rating
+        raw_score = self.rating_module(
+            pipeline_input=example.input_xml,
+            pipeline_output=pred.output_xml
+        )
+        return raw_score / 9.0
 
     def _load_optimized_model(self) -> dspy.Predict:
         """Load optimized model weights if available."""
