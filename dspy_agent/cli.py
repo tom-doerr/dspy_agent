@@ -49,7 +49,12 @@ def generate_training_data(
     # Save to JSONL
     with open(output_file, "w") as f:
         for ex in examples:
-            f.write(json.dumps({"input_xml": ex.input_xml, "output_xml": ex.output_xml}) + "\n")
+            f.write(json.dumps({
+                "input_schema": INPUT_XML_SCHEMA,
+                "output_schema": OUTPUT_XML_SCHEMA,
+                "input_xml": ex.input_xml,
+                "output_xml": ex.output_xml
+            }) + "\n")
             
     console.print(f"Generated {count} training examples in {output_file}", style="bold green")
 
@@ -80,15 +85,25 @@ def optimize(
 
     try:
         with open(training_data) as f:
-            examples = [
-                dspy.Example(
-                    input_schema=line["input_schema"],
-                    output_schema=line["output_schema"],
-                    input_xml=line["input_xml"],
-                    output_xml=line["output_xml"]
-                ).with_inputs("input_schema", "output_schema", "input_xml")
-                for line in (json.loads(l) for l in f)
-            ]
+            examples = []
+            for line in (json.loads(l) for l in f):
+                # Handle both formats: with schemas in file or using defaults
+                if "input_schema" in line and "output_schema" in line:
+                    example = dspy.Example(
+                        input_schema=line["input_schema"],
+                        output_schema=line["output_schema"],
+                        input_xml=line["input_xml"],
+                        output_xml=line["output_xml"]
+                    )
+                else:
+                    # Use schema constants from schema.py
+                    example = dspy.Example(
+                        input_schema=INPUT_XML_SCHEMA,
+                        output_schema=OUTPUT_XML_SCHEMA,
+                        input_xml=line["input_xml"],
+                        output_xml=line["output_xml"]
+                    )
+                examples.append(example.with_inputs("input_schema", "output_schema", "input_xml"))
     except IOError as e:
         console.print(f"Error reading training data: {str(e)}", style="bold red")
         raise typer.Exit(code=1)

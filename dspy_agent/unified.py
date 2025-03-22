@@ -71,14 +71,34 @@ class UnifiedModule(dspy.Module):
 
     def _load_training_data(self):
         """Load training data from file."""
-        with open("train_data.jsonl") as f:
-            examples = []
-            for line in f:
-                data = json.loads(line)
-                if "input_xml" not in data or "output_xml" not in data:
-                    raise ValueError("Invalid training example format")
-                examples.append(dspy.Example(**data).with_inputs("input_xml"))
-            return examples
+        try:
+            with open("train_data.jsonl") as f:
+                examples = []
+                for line in f:
+                    data = json.loads(line)
+                    if "input_xml" not in data or "output_xml" not in data:
+                        raise ValueError("Invalid training example format")
+                    
+                    # Handle both formats: with schemas in file or using defaults
+                    if "input_schema" in data and "output_schema" in data:
+                        example = dspy.Example(
+                            input_schema=data["input_schema"],
+                            output_schema=data["output_schema"],
+                            input_xml=data["input_xml"],
+                            output_xml=data["output_xml"]
+                        )
+                    else:
+                        example = dspy.Example(
+                            input_schema=INPUT_XML_SCHEMA,
+                            output_schema=OUTPUT_XML_SCHEMA,
+                            input_xml=data["input_xml"],
+                            output_xml=data["output_xml"]
+                        )
+                    examples.append(example.with_inputs("input_schema", "output_schema", "input_xml"))
+                return examples
+        except FileNotFoundError:
+            # Return empty list if file doesn't exist
+            return []
 
     def _load_optimized_model(self) -> dspy.Predict:
         """Load optimized model weights if available."""
