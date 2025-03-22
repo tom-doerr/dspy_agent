@@ -47,6 +47,19 @@ class UnifiedModule(dspy.Module):
                 self.console.print(f"Invalid XML content:\n{pred.output_xml}", style="red")
                 return 0.0
             
+            # Get detailed ratings with reasoning
+            detailed_ratings = self.rating_module.get_detailed_ratings(
+                pipeline_input=example.input_xml,
+                pipeline_output=pred.output_xml
+            )
+            
+            # Print detailed ratings
+            self.console.print("[bold]Detailed Ratings:[/bold]")
+            for criterion, rating in detailed_ratings.items():
+                if criterion != "error":
+                    self.console.print(f"[bold]{criterion.capitalize()}:[/bold] {rating['score']}/9")
+                    self.console.print(f"  Reasoning: {rating['reasoning']}")
+            
             # Calculate quality rating if XML is valid
             raw_score = self.rating_module(
                 pipeline_input=example.input_xml,
