@@ -111,7 +111,7 @@ class Optimizer:
             optimized_predictor = self.optimizer.compile(
                 predictor,
                 trainset=train_data,
-                requires_permission_to_run=requires_permission,
+                requires_permission_to_run=False,
             )
             
             # Save and return optimized model
