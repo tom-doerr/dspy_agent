@@ -61,7 +61,6 @@ def generate_training_data(
 @app.command()
 def optimize(
     training_data: str = typer.Argument(..., help="Path to training data file"),
-    epochs: int = typer.Option(3, help="Number of optimization passes"),
     model: str = typer.Option("deepseek/deepseek-chat", help="The model to use"),
     optimizer: str = typer.Option(
         "bootstrap", 
@@ -69,66 +68,14 @@ def optimize(
     )
 ):
     """Optimize the DSPy module using training data."""
-    import dspy
-    from .unified import UnifiedModule
+    from .optimizer import Optimizer
     
-    # Configure DSPy with the language model
-    lm = dspy.LM(model,
-            cache=False,
-            )
-    dspy.settings.configure(lm=lm)
-    
-    # Load training data with helpful error messages
-    if not os.path.exists(training_data):
-        console.print(f"Error: Training data file '{training_data}' not found", style="bold red")
-        console.print("First generate training data with:", style="yellow")
-        console.print(f"  python -m dspy_agent.cli generate-training-data {training_data} --count 50", style="green")
-        raise typer.Exit(code=1)
-
     try:
-        with open(training_data) as f:
-            examples = []
-            for line in (json.loads(l) for l in f):
-                # Handle both formats: with schemas in file or using defaults
-                if "input_schema" in line and "output_schema" in line:
-                    example = dspy.Example(
-                        input_schema=line["input_schema"],
-                        output_schema=line["output_schema"],
-                        input_xml=line["input_xml"],
-                        output_xml=line["output_xml"]
-                    )
-                else:
-                    # Use schema constants from schema.py
-                    example = dspy.Example(
-                        input_schema=INPUT_XML_SCHEMA,
-                        output_schema=OUTPUT_XML_SCHEMA,
-                        input_xml=line["input_xml"],
-                        output_xml=line["output_xml"]
-                    )
-                examples.append(example.with_inputs("input_schema", "output_schema", "input_xml"))
-    except IOError as e:
-        console.print(f"Error reading training data: {str(e)}", style="bold red")
-        raise typer.Exit(code=1)
-    
-    # Initialize and optimize
-    module = UnifiedModule(optimizer=optimizer)
-    try:
-        module.predictor = module.teleprompter.compile(
-            module.predictor,
-            trainset=examples,
-            requires_permission_to_run=False,
-        )
+        optimizer = Optimizer(model_name=model)
+        optimizer.optimize(training_data, optimizer_type=optimizer)
     except Exception as e:
-        console.print(f"[bold red]Optimization Failed:[/bold red] {str(e)}", style="red")
-        console.print("Last successful example:", style="yellow")
-        if examples:
-            console.print(f"Input: {examples[-1].input_xml}", style="yellow")
-            console.print(f"Output: {examples[-1].output_xml}", style="yellow")
+        console.print(f"Optimization failed: {str(e)}", style="red")
         raise typer.Exit(code=1)
-    
-    # Save optimized model
-    module.save_optimized_model()
-    console.print(f"Optimization complete with {len(examples)} examples", style="bold green")
 
 @app.command()
 def run(
