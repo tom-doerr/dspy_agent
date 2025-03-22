@@ -81,7 +81,12 @@ def optimize(
     try:
         with open(training_data) as f:
             examples = [
-                dspy.Example(input_xml=line["input_xml"], output_xml=line["output_xml"]).with_inputs("input_xml")
+                dspy.Example(
+                    input_schema=INPUT_XML_SCHEMA,
+                    output_schema=OUTPUT_XML_SCHEMA,
+                    input_xml=line["input_xml"],
+                    output_xml=line["output_xml"]
+                ).with_inputs("input_schema", "output_schema", "input_xml")
                 for line in (json.loads(l) for l in f)
             ]
     except IOError as e:
