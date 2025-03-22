@@ -44,13 +44,13 @@ class Optimizer:
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric that combines XML validity and quality ratings."""
+        # Validate XML structure
+        is_valid, error = UnifiedModule().validate_xml(pred.output_xml)
+        if not is_valid:
+            console.print(f"[red]XML Validation Failed:[/red] {error}", style="red")
+            return 0.0
+        
         try:
-            # Validate XML structure
-            is_valid, error = UnifiedModule().validate_xml(pred.output_xml)
-            if not is_valid:
-                console.print(f"[red]XML Validation Failed:[/red] {error}", style="red")
-                return 0.0
-            
             # Get detailed ratings with reasoning
             detailed_ratings = self.rating_module.get_detailed_ratings(
                 pipeline_input=example.input_xml,
@@ -72,7 +72,8 @@ class Optimizer:
             return raw_score / 9.0
             
         except Exception as e:
-            console.print(f"[bold red]Validation Error:[/bold red] {str(e)}", style="red")
+            console.print(f"[bold red]Rating Error:[/bold red] {str(e)}", style="red")
+            # Return 0.0 instead of raising an exception
             return 0.0
 
     def _load_optimized_model(self) -> dspy.Predict:

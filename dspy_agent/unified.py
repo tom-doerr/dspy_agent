@@ -43,15 +43,15 @@ class UnifiedModule(dspy.Module):
         print(f'Generated XML: {pred.output_xml}', flush=True)
         # time.sleep(1)
 
+        # First validate XML structure
+        is_valid, validation_error = self.validate_xml(pred.output_xml)
+        
+        if not is_valid:
+            self.console.print(f"[red]XML Validation Failed:[/red] {validation_error}", style="red")
+            self.console.print(f"Invalid XML content:\n{pred.output_xml}", style="red")
+            return 0.0
+        
         try:
-            # First validate XML structure
-            is_valid, validation_error = self.validate_xml(pred.output_xml)
-            
-            if not is_valid:
-                self.console.print(f"[red]XML Validation Failed:[/red] {validation_error}", style="red")
-                self.console.print(f"Invalid XML content:\n{pred.output_xml}", style="red")
-                return 0.0
-            
             # Get detailed ratings with reasoning
             detailed_ratings = self.rating_module.get_detailed_ratings(
                 pipeline_input=example.input_xml,
@@ -75,9 +75,10 @@ class UnifiedModule(dspy.Module):
             return normalized_score
             
         except Exception as e:
-            self.console.print(f"[bold red]Validation Error:[/bold red] {str(e)}", style="red")
+            self.console.print(f"[bold red]Rating Error:[/bold red] {str(e)}", style="red")
             self.console.print(f"Example Input: {example.input_xml}", style="yellow")
             self.console.print(f"Predicted Output: {pred.output_xml}", style="yellow")
+            # Return 0.0 instead of raising an exception
             return 0.0
 
     def validate_xml(self, xml_string: str) -> tuple[bool, str]:
