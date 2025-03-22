@@ -68,7 +68,7 @@ def optimize(
     )
 ):
     """Optimize the DSPy module using training data."""
-    from .optimizer import Optimizer
+    from .optimization import Optimizer
     
     try:
         optimizer = Optimizer(model_name=model, optimizer_type=optimizer)
