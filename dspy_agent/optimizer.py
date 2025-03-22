@@ -4,6 +4,7 @@ import os
 from rich.console import Console
 from .unified import UnifiedModule
 from .rating import RatingModule
+from .schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
 from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPROv2
 
 console = Console()
