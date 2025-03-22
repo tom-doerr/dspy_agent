@@ -2,7 +2,7 @@ import dspy
 import json
 import os
 from rich.console import Console
-from .unified import UnifiedModule
+from .unified import UnifiedModule, UnifiedTask
 from .rating import RatingModule
 from .schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
 from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPROv2
