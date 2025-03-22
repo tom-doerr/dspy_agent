@@ -44,6 +44,8 @@ class Optimizer:
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric that combines XML validity and quality ratings."""
+        console.print(f'Input XML: {pred.input_xml}')
+        console.print(f'Generated XML: {pred.output_xml}')
         # Validate XML structure
         is_valid, error = UnifiedModule().validate_xml(pred.output_xml)
         if not is_valid:
