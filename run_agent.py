@@ -17,7 +17,7 @@ def main():
     model = sys.argv[2] if len(sys.argv) > 2 else "deepseek/deepseek-chat"
     
     # Configure DSPy with the language model
-    lm = dspy.LM(model)
+    lm = dspy.LM(model, max_tokens=1000)
     dspy.settings.configure(lm=lm)
     unified_module = UnifiedModule()
 
