@@ -1,12 +1,15 @@
 import dspy
+from rich import print
 
 class RatingTask(dspy.Signature):
-    """Rate pipeline output across multiple criteria."""
+    """Rate pipeline output across multiple criteria.
+    Be hash in your rating, deduct a point for every issue."""
     pipeline_input = dspy.InputField()
     pipeline_output = dspy.InputField()
-    accuracy = dspy.OutputField(desc="Score for accuracy (1-9)")
-    clarity = dspy.OutputField(desc="Score for clarity (1-9)")
-    relevance = dspy.OutputField(desc="Score for relevance (1-9)")
+    added_all_relevant_information_to_memory_score = dspy.OutputField(desc="Did the pipeline add all relevant information to memory?")
+    next_action_score = dspy.OutputField(desc="How good is the next action?")
+    plan_score = dspy.OutputField(desc="How good is the plan?")
+
 
 class RatingModule(dspy.Module):
     def __init__(self):
@@ -21,10 +24,11 @@ class RatingModule(dspy.Module):
         )
         try:
             scores = [
-                int(result.accuracy),
-                int(result.clarity),
-                int(result.relevance)
+                result.added_all_relevant_information_to_memory_score,
+                result.next_action_score,
+                result.plan_score
             ]
+            print(f"Accuracy: {scores[0]}, Clarity: {scores[1]}, Relevance: {scores[2]}")
             # Clamp scores between 1 and 9
             scores = [max(1, min(9, score)) for score in scores]
             return sum(scores) / len(scores)  # Average
