@@ -19,14 +19,10 @@ from .schema import (
 
 class UnifiedTask(dspy.Signature):
     """Generate output XML with updated memory, new plan, and execution instructions from input XML."""
-    input_xml = dspy.InputField(desc=f"Input XML with memory, last_plan, last_action, observation. Schema: {INPUT_XML_SCHEMA}")
-    output_xml = dspy.OutputField(desc=f"""Output XML with:
-    - updated_memory: Updated knowledge based on observations
-    - new_plan: A structured plan following this schema: {PLAN_XML_SCHEMA}
-    - execution_instructions: Write operations to execute following this schema: {EXECUTION_XML_SCHEMA}
-    - is_done: Boolean indicating if the task is complete
-    
-    Full schema: {OUTPUT_XML_SCHEMA}""")
+    input_schema = dspy.InputField(desc="Input XML schema", default=INPUT_XML_SCHEMA)
+    output_schema = dspy.InputField(desc="Output XML schema", default=OUTPUT_XML_SCHEMA)
+    input_xml = dspy.InputField(desc="Input XML following the input schema")
+    output_xml = dspy.OutputField(desc="Output XML following the output schema")
 
 class UnifiedModule(dspy.Module):
     def __init__(self, teleprompter=None, optimizer: str = "bootstrap"):
@@ -144,7 +140,11 @@ class UnifiedModule(dspy.Module):
 
     def forward(self, input_xml: str) -> str:
         """Generate the output XML based on the input XML."""
-        result = self.predictor(input_xml=input_xml)
+        result = self.predictor(
+            input_schema=INPUT_XML_SCHEMA,
+            output_schema=OUTPUT_XML_SCHEMA,
+            input_xml=input_xml
+        )
         output_xml = result.output_xml
         
         # Validate the output XML

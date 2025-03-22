@@ -40,9 +40,11 @@ def generate_training_data(
                 ]))
         
         examples.append(dspy.Example(
+            input_schema=INPUT_XML_SCHEMA,
+            output_schema=OUTPUT_XML_SCHEMA,
             input_xml=input_xml,
             output_xml=output_xml
-        ).with_inputs("input_xml"))
+        ).with_inputs("input_schema", "output_schema", "input_xml"))
     
     # Save to JSONL
     with open(output_file, "w") as f:
