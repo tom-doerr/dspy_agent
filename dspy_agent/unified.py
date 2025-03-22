@@ -6,6 +6,7 @@ from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPROv2
 import xml.etree.ElementTree as ET
 from lxml import etree
 import io
+import time
 from .schema import (
     INPUT_XML_SCHEMA,
     OUTPUT_XML_SCHEMA,
@@ -38,6 +39,10 @@ class UnifiedModule(dspy.Module):
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric that combines XML validity and quality ratings."""
+        self.console.print(f'Generated XML: {pred.output_xml}', flush=True)
+        print(f'Generated XML: {pred.output_xml}', flush=True)
+        # time.sleep(1)
+
         try:
             # First validate XML structure
             is_valid, validation_error = self.validate_xml(pred.output_xml)
