@@ -71,8 +71,8 @@ def optimize(
     from .optimizer import Optimizer
     
     try:
-        optimizer = Optimizer(model_name=model)
-        optimizer.optimize(training_data, optimizer_type=optimizer)
+        optimizer = Optimizer(model_name=model, optimizer_type=optimizer)
+        optimizer.optimize(training_data)
     except Exception as e:
         console.print(f"Optimization failed: {str(e)}", style="red")
         raise typer.Exit(code=1)

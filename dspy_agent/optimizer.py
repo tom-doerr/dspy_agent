@@ -12,21 +12,34 @@ console = Console()
 class Optimizer:
     """Handles model optimization workflow"""
     
-    def __init__(self, model_name: str = "deepseek/deepseek-chat"):
+    def __init__(self, model_name: str = "deepseek/deepseek-chat", optimizer_type: str = "bootstrap"):
         self.model_name = model_name
         self.rating_module = RatingModule()
         self.teleprompter = None
         self._configure_model()
-        self._init_teleprompter()
+        self._init_teleprompter(optimizer_type)
 
-    def _init_teleprompter(self):
+    def _init_teleprompter(self, optimizer_type="bootstrap"):
         """Initialize the optimization strategy"""
-        self.teleprompter = BootstrapFewShotWithRandomSearch(
-            metric=self._validation_metric,
-            max_bootstrapped_demos=8,
-            max_labeled_demos=8,
-            num_candidate_programs=5
-        )
+        if optimizer_type == "random_search":
+            self.teleprompter = BootstrapFewShotWithRandomSearch(
+                metric=self._validation_metric,
+                max_bootstrapped_demos=8,
+                max_labeled_demos=8,
+                num_candidate_programs=5
+            )
+        elif optimizer_type == "mipro":
+            self.teleprompter = MIPROv2(
+                metric=self._validation_metric,
+                auto='light',
+            )
+        else:  # default bootstrap
+            self.teleprompter = dspy.BootstrapFewShot(
+                metric=self._validation_metric,
+                max_bootstrapped_demos=8,
+                max_rounds=4,
+                max_labeled_demos=8
+            )
 
     def _validation_metric(self, example, pred, trace=None):
         """Custom metric that combines XML validity and quality ratings."""
