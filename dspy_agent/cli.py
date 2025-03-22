@@ -82,8 +82,8 @@ def optimize(
         with open(training_data) as f:
             examples = [
                 dspy.Example(
-                    input_schema=INPUT_XML_SCHEMA,
-                    output_schema=OUTPUT_XML_SCHEMA,
+                    input_schema=line["input_schema"],
+                    output_schema=line["output_schema"],
                     input_xml=line["input_xml"],
                     output_xml=line["output_xml"]
                 ).with_inputs("input_schema", "output_schema", "input_xml")

@@ -120,24 +120,19 @@ class UnifiedModule(dspy.Module):
             return 0.0
 
     def validate_xml(self, xml_string: str) -> tuple[bool, str]:
-        """Validate XML against the schema."""
+        """Validate XML against the schema with local resolution"""
         try:
-            xml_doc = etree.parse(io.StringIO(xml_string))
-            is_valid = self.output_schema_parser.validate(xml_doc)
+            # Use local schema instead of external URL
+            schema_root = etree.XML(OUTPUT_XML_SCHEMA.encode())
+            schema = etree.XMLSchema(schema_root)
             
-            if not is_valid:
-                error_log = self.output_schema_parser.error_log
-                errors = "\n".join([
-                    f"Line {error.line}: {error.message}" 
-                    for error in error_log.filter_from_errors()
-                ])
-                return False, f"Schema validation errors:\n{errors}"
-                
+            parser = etree.XMLParser(schema=schema)
+            etree.fromstring(xml_string.encode(), parser)
             return True, ""
         except etree.XMLSyntaxError as e:
             return False, f"XML syntax error: {str(e)}"
         except Exception as e:
-            return False, f"Unexpected validation error: {str(e)}"
+            return False, f"Validation error: {str(e)}"
 
     def forward(self, input_xml: str) -> str:
         """Generate the output XML based on the input XML."""
