@@ -90,8 +90,8 @@ def run(
         raise typer.Exit(code=1)
 
     # Configure DSPy with the language model
-    lm = dspy.LM(model)
-    dspy.settings.configure(lm=lm)
+    from .config import configure_lm
+    configure_lm(model)
     unified_module = UnifiedModule()
 
     # Initial state

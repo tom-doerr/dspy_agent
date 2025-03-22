@@ -19,8 +19,8 @@ class Optimizer:
         
     def _configure_model(self):
         """Centralized model configuration"""
-        lm = dspy.LM(self.model_name)
-        dspy.settings.configure(lm=lm)
+        from .config import configure_lm
+        configure_lm(self.model_name)
     
     def _load_training_data(self, data_path: str):
         """Load training data from file"""
