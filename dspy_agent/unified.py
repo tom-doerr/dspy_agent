@@ -74,22 +74,14 @@ class UnifiedModule(dspy.Module):
 
     def _load_training_data(self):
         """Load training data from file."""
-        try:
-            with open("train_data.jsonl") as f:
-                examples = []
-                for line in f:
-                    data = json.loads(line)
-                    if "input_xml" not in data or "output_xml" not in data:
-                        raise ValueError("Invalid training example format")
-                    examples.append(dspy.Example(**data).with_inputs("input_xml"))
-                return examples
-        except FileNotFoundError:
-            return [
-                dspy.Example(
-                    input_xml=EXAMPLE_INPUT_XML,
-                    output_xml=EXAMPLE_OUTPUT_XML
-                ).with_inputs("input_xml")
-            ]
+        with open("train_data.jsonl") as f:
+            examples = []
+            for line in f:
+                data = json.loads(line)
+                if "input_xml" not in data or "output_xml" not in data:
+                    raise ValueError("Invalid training example format")
+                examples.append(dspy.Example(**data).with_inputs("input_xml"))
+            return examples
 
     def _load_optimized_model(self) -> dspy.Predict:
         """Load optimized model weights if available."""
@@ -164,40 +156,6 @@ class UnifiedModule(dspy.Module):
                 # Parse with more lenient parser
                 root = ET.fromstring(output_xml)
                 
-                # Check for required elements
-                required_elements = [
-                    "updated_memory",
-                    "new_plan", 
-                    "execution_instructions",
-                    "expected_outcome",
-                    "is_done"
-                ]
-                
-                for elem_name in required_elements:
-                    if root.find(elem_name) is None:
-                        # Create element with default content
-                        if elem_name == "updated_memory":
-                            new_elem = ET.SubElement(root, elem_name)
-                            new_elem.text = "No memory updates."
-                        elif elem_name == "new_plan":
-                            new_elem = ET.SubElement(root, elem_name)
-                            plan_root = ET.fromstring(EXAMPLE_PLAN_XML)
-                            new_elem.append(plan_root)
-                        elif elem_name == "execution_instructions":
-                            new_elem = ET.SubElement(root, elem_name)
-                            exec_root = ET.fromstring(EXAMPLE_EXECUTION_XML)
-                            new_elem.append(exec_root)
-                        elif elem_name == "expected_outcome":
-                            new_elem = ET.SubElement(root, elem_name)
-                            new_elem.text = "Expected outcome not specified"
-                        elif elem_name == "is_done":
-                            new_elem = ET.SubElement(root, elem_name)
-                            new_elem.text = "false"
-                        
-                        # Reinsert in correct order
-                        root.remove(new_elem)
-                        insert_position = required_elements.index(elem_name)
-                        root.insert(insert_position, new_elem)
                 
                 # Convert back to string
                 output_xml = ET.tostring(root, encoding='unicode')
