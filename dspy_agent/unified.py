@@ -43,6 +43,7 @@ class UnifiedModule(dspy.Module):
                 self.teleprompter = MIPROv2(
                     metric=self._validation_metric,
                     auto='light',
+                    require_complete_examples=True
                 )
             else:  # default bootstrap
                 self.teleprompter = dspy.BootstrapFewShot(
