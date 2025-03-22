@@ -8,6 +8,6 @@ def configure_lm(model_name: str = "deepseek/deepseek-chat") -> None:
     
     lm = dspy.LM(model_name, 
             cache=False, 
-            max_tokens=500,
+            max_tokens=1000,
             )
     dspy.settings.configure(lm=lm)
