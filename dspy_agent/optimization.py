@@ -51,7 +51,7 @@ class Optimizer:
                 max_labeled_demos=8,
             )
 
-    def _validation_metric(self, example, pred, trace=None):
+    def _validation_metric(self, example, pred):
         """Custom metric that combines XML validity and quality ratings."""
         console.print(f"example: {example}")
         console.print(f"pred: {pred}")
@@ -115,7 +115,7 @@ class Optimizer:
             )
             raise FileNotFoundError(f"Training data not found at {data_path}")
 
-        with open(data_path) as f:
+        with open(data_path, encoding="utf-8") as f:
             return [self._parse_training_example(line) for line in f]
 
     def _parse_training_example(self, line: str):
@@ -128,7 +128,7 @@ class Optimizer:
             output_xml=data.get("output_xml", ""),
         ).with_inputs("input_schema", "output_schema", "input_xml")
 
-    def optimize(self, training_data_path: str, num_iterations: int = 3):
+    def optimize(self, training_data_path: str):
         """Run full optimization workflow"""
         train_data = self._load_training_data(training_data_path)
 
@@ -137,12 +137,9 @@ class Optimizer:
             predictor = self._load_optimized_model() or dspy.Predict(UnifiedTask)
 
             # Run optimization
-            # Only MIPROv2 needs permission to run
-            requires_permission = self.optimizer_type == "mipro"
             optimized_predictor = self.optimizer.compile(
                 predictor,
                 trainset=train_data,
-                requires_permission_to_run=False,
             )
 
             # Save and return optimized model
