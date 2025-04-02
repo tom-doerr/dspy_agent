@@ -1,22 +1,9 @@
 import dspy
-import json
 from rich.console import Console
 from .rating import RatingModule
-from dspy.teleprompt import BootstrapFewShotWithRandomSearch, MIPROv2
 import xml.etree.ElementTree as ET
 from lxml import etree
-import io
-import time
-from .schema import (
-    INPUT_XML_SCHEMA,
-    OUTPUT_XML_SCHEMA,
-    PLAN_XML_SCHEMA,
-    EXECUTION_XML_SCHEMA,
-    EXAMPLE_INPUT_XML,
-    EXAMPLE_OUTPUT_XML,
-    EXAMPLE_PLAN_XML,
-    EXAMPLE_EXECUTION_XML,
-)
+from .schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
 
 
 class UnifiedTask(dspy.Signature):
@@ -38,10 +25,10 @@ class UnifiedModule(dspy.Module):
         # Parse the schema for validation
         self.output_schema_parser = etree.XMLSchema(etree.XML(OUTPUT_XML_SCHEMA))
 
-    def _validation_metric(self, example, pred, trace=None):
+    def _validation_metric(self, example, pred):
         """Custom metric that combines XML validity and quality ratings."""
-        self.console.print(f"Generated XML: {pred.output_xml}", flush=True)
-        print(f"Generated XML: {pred.output_xml}", flush=True)
+        self.console.print(f"Generated XML: {pred.output_xml}")
+        print(f"Generated XML: {pred.output_xml}")
         # time.sleep(1)
 
         # First validate XML structure
@@ -92,12 +79,12 @@ class UnifiedModule(dspy.Module):
             return True, ""
         except etree.XMLSyntaxError as e:
             return False, f"XML syntax error: {str(e)}"
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             return False, f"Validation error: {str(e)}"
 
     def forward(self, input_xml: str) -> str:
         """Generate the output XML based on the input XML."""
-        self.console.print(f"Input XML:\n{input_xml}", flush=True)
+        self.console.print(f"Input XML:\n{input_xml}")
         result = self.predictor(
             input_schema=INPUT_XML_SCHEMA,
             output_schema=OUTPUT_XML_SCHEMA,
@@ -125,7 +112,7 @@ class UnifiedModule(dspy.Module):
                         f"Warning: Generated XML is still invalid: {error_message}",
                         style="yellow",
                     )
-            except Exception as e:
+            except ET.ParseError as e:
                 self.console.print(f"Error fixing XML: {e}", style="red")
 
         return output_xml
