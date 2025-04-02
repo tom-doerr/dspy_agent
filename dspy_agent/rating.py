@@ -1,5 +1,4 @@
 import dspy
-from rich import print
 
 
 class RatingTask(dspy.Signature):

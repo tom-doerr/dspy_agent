@@ -2,6 +2,7 @@ import dspy
 import json
 import os
 from rich.console import Console
+from .config import configure_lm
 from .unified import UnifiedModule, UnifiedTask
 from .rating import RatingModule
 from .schema import INPUT_XML_SCHEMA, OUTPUT_XML_SCHEMA
@@ -102,7 +103,7 @@ class Optimizer:
 
     def _configure_model(self):
         """Centralized model configuration"""
-        from .config import configure_lm
+        # Import moved to top of file to fix linting warning
 
         configure_lm(self.model_name)
 
