@@ -86,7 +86,9 @@ class UnifiedModule(dspy.Module):
             schema = etree.XMLSchema(schema_root)
 
             parser = etree.XMLParser(schema=schema)
-            etree.fromstring(xml_string.encode(), parser)
+            # Wrap in root element to match schema structure
+            wrapped_xml = f"<agent_output>{xml_string}</agent_output>"
+            etree.fromstring(wrapped_xml.encode(), parser)
             return True, ""
         except etree.XMLSyntaxError as e:
             return False, f"XML syntax error: {str(e)}"
